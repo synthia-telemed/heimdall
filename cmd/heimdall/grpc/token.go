@@ -2,9 +2,9 @@ package grpc
 
 import (
 	"context"
-	pb "github.com/thetkpark/heimdall/cmd/heimdall/proto"
-	"github.com/thetkpark/heimdall/pkg/config"
-	"github.com/thetkpark/heimdall/pkg/token"
+	pb "github.com/synthia-telemed/heimdall/cmd/heimdall/proto"
+	"github.com/synthia-telemed/heimdall/pkg/config"
+	"github.com/synthia-telemed/heimdall/pkg/token"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

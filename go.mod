@@ -1,4 +1,4 @@
-module github.com/thetkpark/heimdall
+module github.com/synthia-telemed/heimdall
 
 go 1.18
 

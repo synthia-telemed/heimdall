@@ -5,10 +5,10 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/thetkpark/heimdall/pkg/config"
-	"github.com/thetkpark/heimdall/pkg/token"
-	"github.com/thetkpark/heimdall/test/mock_encryption"
-	"github.com/thetkpark/heimdall/test/mock_signature"
+	"github.com/synthia-telemed/heimdall/pkg/config"
+	"github.com/synthia-telemed/heimdall/pkg/token"
+	"github.com/synthia-telemed/heimdall/test/mock_encryption"
+	"github.com/synthia-telemed/heimdall/test/mock_signature"
 	"time"
 )
 

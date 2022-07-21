@@ -3,7 +3,7 @@ package encryption_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/thetkpark/heimdall/pkg/encryption"
+	"github.com/synthia-telemed/heimdall/pkg/encryption"
 )
 
 var _ = Describe("AES Encryption", Label("encryption"), func() {

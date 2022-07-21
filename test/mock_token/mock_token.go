@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	config "github.com/thetkpark/heimdall/pkg/config"
+	config "github.com/synthia-telemed/heimdall/pkg/config"
 )
 
 // MockManager is a mock of Manager interface.

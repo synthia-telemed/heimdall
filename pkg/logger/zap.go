@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/thetkpark/heimdall/pkg/config"
+	"github.com/synthia-telemed/heimdall/pkg/config"
 	"go.uber.org/zap"
 )
 

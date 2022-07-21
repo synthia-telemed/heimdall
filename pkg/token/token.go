@@ -2,9 +2,9 @@ package token
 
 import (
 	"encoding/json"
-	"github.com/thetkpark/heimdall/pkg/config"
-	"github.com/thetkpark/heimdall/pkg/encryption"
-	"github.com/thetkpark/heimdall/pkg/signature"
+	"github.com/synthia-telemed/heimdall/pkg/config"
+	"github.com/synthia-telemed/heimdall/pkg/encryption"
+	"github.com/synthia-telemed/heimdall/pkg/signature"
 )
 
 type Manager interface {

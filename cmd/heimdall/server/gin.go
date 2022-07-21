@@ -4,8 +4,8 @@ import (
 	"fmt"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
-	"github.com/thetkpark/heimdall/cmd/heimdall/handler"
-	"github.com/thetkpark/heimdall/pkg/config"
+	"github.com/synthia-telemed/heimdall/cmd/heimdall/handler"
+	"github.com/synthia-telemed/heimdall/pkg/config"
 	"net/http"
 	"time"
 )

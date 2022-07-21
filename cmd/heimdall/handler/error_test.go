@@ -7,7 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/thetkpark/heimdall/cmd/heimdall/handler"
+	"github.com/synthia-telemed/heimdall/cmd/heimdall/handler"
 	"net/http"
 	"net/http/httptest"
 )

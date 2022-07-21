@@ -6,9 +6,9 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/thetkpark/heimdall/cmd/heimdall/grpc"
-	pb "github.com/thetkpark/heimdall/cmd/heimdall/proto"
-	"github.com/thetkpark/heimdall/test/mock_token"
+	"github.com/synthia-telemed/heimdall/cmd/heimdall/grpc"
+	pb "github.com/synthia-telemed/heimdall/cmd/heimdall/proto"
+	"github.com/synthia-telemed/heimdall/test/mock_token"
 	"go.uber.org/zap"
 	"time"
 )

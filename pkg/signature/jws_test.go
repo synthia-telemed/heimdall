@@ -3,7 +3,7 @@ package signature_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/thetkpark/heimdall/pkg/signature"
+	"github.com/synthia-telemed/heimdall/pkg/signature"
 )
 
 var _ = Describe("Json Web Signature", func() {
