@@ -59,6 +59,16 @@ var _ = Describe("TokenServer_gRPC", func() {
 			})
 		})
 
+		When("Request is invalid", func() {
+			BeforeEach(func() {
+				req = &pb.GenerateTokenRequest{}
+			})
+			It("should get the token successfully", func() {
+				Expect(resError).ToNot(BeNil())
+				Expect(res).To(BeNil())
+			})
+		})
+
 		When("Failed to generate token", func() {
 			BeforeEach(func() {
 				mockTokenManager.EXPECT().Generate(gomock.Any()).Return("", errors.New("failed to generate")).Times(1)
