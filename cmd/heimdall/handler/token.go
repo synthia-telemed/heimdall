@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/synthia-telemed/heimdall/pkg/config"
 	"github.com/synthia-telemed/heimdall/pkg/token"
@@ -30,6 +31,14 @@ type TokenHandler struct {
 	validTime    time.Duration
 }
 
+type TokenResponse struct {
+	Token string `json:"token"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 func NewTokenHandler(logger *zap.SugaredLogger, tokenMng token.Manager, validTime time.Duration) *TokenHandler {
 	return &TokenHandler{
 		logger:       logger,
@@ -38,6 +47,16 @@ func NewTokenHandler(logger *zap.SugaredLogger, tokenMng token.Manager, validTim
 	}
 }
 
+// GenerateToken godoc
+// @Summary      Generate token with the payload
+// @Tags         token
+// @Accept       json
+// @Produce      json
+// @Param payload body config.CustomPayload true "Payload"
+// @Success      201  {object}  TokenResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /generate [POST]
 func (h TokenHandler) GenerateToken(c *gin.Context) {
 	var customPayload config.CustomPayload
 	err := c.ShouldBindJSON(&customPayload)
@@ -57,40 +76,70 @@ func (h TokenHandler) GenerateToken(c *gin.Context) {
 	if err != nil {
 		h.logger.Errorw("h.tokenManager.Generate error", "error", err, "payload", payload)
 		_ = c.AbortWithError(http.StatusInternalServerError, TokenGenerationError)
+		if hub := sentrygin.GetHubFromContext(c); hub != nil {
+			hub.CaptureException(err)
+		}
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{
-		"token": tokenString,
-	})
+	c.JSON(http.StatusCreated, TokenResponse{Token: tokenString})
 }
 
-func (h TokenHandler) VerifyToken(c *gin.Context) {
+// ParsePayload godoc
+// @Summary      Verify token and parse payload
+// @Tags         token
+// @Security	 JWSToken
+// @Produce      json
+// @Success      200  {object}  config.Payload
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /auth/body [GET]
+func (h TokenHandler) ParsePayload(c *gin.Context) {
 	payloadValue, ok := c.Get("payload")
 	if !ok {
 		h.logger.Error("Failed get payload from context")
 		_ = c.AbortWithError(http.StatusInternalServerError, GetPayloadFromContextError)
+		if hub := sentrygin.GetHubFromContext(c); hub != nil {
+			hub.CaptureException(GetPayloadFromContextError)
+		}
 		return
 	}
 	payload, ok := payloadValue.(*config.Payload)
 	if !ok {
 		h.logger.Error("Failed parse payload type")
 		_ = c.AbortWithError(http.StatusInternalServerError, PayloadTypeCastingError)
+		if hub := sentrygin.GetHubFromContext(c); hub != nil {
+			hub.CaptureException(PayloadTypeCastingError)
+		}
 		return
 	}
 	c.JSON(http.StatusOK, payload)
 }
 
-func (h TokenHandler) VerifyAndSetHeader(c *gin.Context) {
+// ParsePayloadAndSetHeader godoc
+// @Summary      Verify token and set custom payload to header
+// @Tags         token
+// @Security	 JWSToken
+// @Success      200
+// @Failure      401  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /auth/header [GET]
+func (h TokenHandler) ParsePayloadAndSetHeader(c *gin.Context) {
 	payloadValue, ok := c.Get("payload")
 	if !ok {
 		h.logger.Error("Failed get payload from context")
 		_ = c.AbortWithError(http.StatusInternalServerError, GetPayloadFromContextError)
+		if hub := sentrygin.GetHubFromContext(c); hub != nil {
+			hub.CaptureException(GetPayloadFromContextError)
+		}
 		return
 	}
 	payload, ok := payloadValue.(*config.Payload)
 	if !ok {
 		h.logger.Error("Failed parse payload type")
 		_ = c.AbortWithError(http.StatusInternalServerError, PayloadTypeCastingError)
+		if hub := sentrygin.GetHubFromContext(c); hub != nil {
+			hub.CaptureException(PayloadTypeCastingError)
+		}
 		return
 	}
 
@@ -109,6 +158,9 @@ func (h TokenHandler) AuthenticateToken(c *gin.Context) {
 	bearerToken := c.GetHeader("Authorization")
 	reg, err := regexp.Compile(`Bearer (.+\..+\..+)`)
 	if err != nil {
+		if hub := sentrygin.GetHubFromContext(c); hub != nil {
+			hub.CaptureException(err)
+		}
 		_ = c.AbortWithError(http.StatusInternalServerError, TokenRegexCreationError)
 		return
 	}
@@ -123,11 +175,18 @@ func (h TokenHandler) AuthenticateToken(c *gin.Context) {
 		return
 	}
 
-	if payload.ExpiredAt.Before(time.Now()) {
+	if h.isTokenExpired(payload.ExpiredAt) {
 		_ = c.AbortWithError(http.StatusUnauthorized, TokenExpiredError)
 		return
 	}
 
 	c.Set("payload", payload)
 	c.Next()
+}
+
+func (h TokenHandler) isTokenExpired(expiredAt time.Time) bool {
+	if h.validTime.Microseconds() == 0 || expiredAt.After(time.Now()) {
+		return false
+	}
+	return true
 }

@@ -2,13 +2,15 @@ package grpc
 
 import (
 	"context"
+	"time"
+
+	"github.com/getsentry/sentry-go"
 	pb "github.com/synthia-telemed/heimdall/cmd/heimdall/proto"
 	"github.com/synthia-telemed/heimdall/pkg/config"
 	"github.com/synthia-telemed/heimdall/pkg/token"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 func NewTokenServer(logger *zap.SugaredLogger, tokenMng token.Manager, validTime time.Duration) *TokenServer {
@@ -43,6 +45,10 @@ func (s TokenServer) GenerateToken(_ context.Context, tokenReq *pb.GenerateToken
 	}
 	tokenString, err := s.tokenManager.Generate(payload)
 	if err != nil {
+		sentry.WithScope(func(scope *sentry.Scope) {
+			scope.SetExtra("payload", payload)
+			sentry.CaptureException(err)
+		})
 		s.logger.Errorw("s.tokenManager.Generate error", "error", err, "payload", payload)
 		return nil, status.Error(codes.Internal, "Failed to generate token string")
 	}

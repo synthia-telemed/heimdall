@@ -2,12 +2,16 @@ package server
 
 import (
 	"fmt"
-	sentrygin "github.com/getsentry/sentry-go/gin"
-	"github.com/gin-gonic/gin"
-	"github.com/synthia-telemed/heimdall/cmd/heimdall/handler"
-	"github.com/synthia-telemed/heimdall/pkg/config"
 	"net/http"
 	"time"
+
+	sentrygin "github.com/getsentry/sentry-go/gin"
+	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/synthia-telemed/heimdall/cmd/heimdall/handler"
+	_ "github.com/synthia-telemed/heimdall/docs"
+	"github.com/synthia-telemed/heimdall/pkg/config"
 )
 
 func NewGINServer(cfg *config.Config, tokenHandler *handler.TokenHandler) *http.Server {
@@ -24,9 +28,10 @@ func NewGINServer(cfg *config.Config, tokenHandler *handler.TokenHandler) *http.
 			"timestamp": time.Now(),
 		})
 	})
-	router.GET("/verify", tokenHandler.AuthenticateToken, tokenHandler.VerifyToken)
-	router.GET("/auth", tokenHandler.AuthenticateToken, tokenHandler.VerifyAndSetHeader)
+	router.GET("/auth/body", tokenHandler.AuthenticateToken, tokenHandler.ParsePayload)
+	router.GET("/auth/header", tokenHandler.AuthenticateToken, tokenHandler.ParsePayloadAndSetHeader)
 	router.POST("/generate", tokenHandler.GenerateToken)
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.GinPort),
