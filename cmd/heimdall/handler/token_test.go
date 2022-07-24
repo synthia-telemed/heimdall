@@ -61,7 +61,7 @@ var _ = Describe("TokenHandler", func() {
 
 		When("Correct request body", func() {
 			BeforeEach(func() {
-				reqBody := strings.NewReader(`{"user_id": 99}`)
+				reqBody := strings.NewReader(`{"user_id": 99, "role": "doctor"}`)
 				c.Request, _ = http.NewRequest(http.MethodPost, "/", reqBody)
 				mockTokenManager.EXPECT().Generate(gomock.Any()).Return("token", nil).Times(1)
 			})
@@ -86,7 +86,7 @@ var _ = Describe("TokenHandler", func() {
 
 		When("Token generation error", func() {
 			BeforeEach(func() {
-				reqBody := strings.NewReader(`{"user_id": 99}`)
+				reqBody := strings.NewReader(`{"user_id": 99, "role": "doctor"}`)
 				c.Request, _ = http.NewRequest(http.MethodPost, "/", reqBody)
 				mockTokenManager.EXPECT().Generate(gomock.Any()).Return("", errors.New("some error")).Times(1)
 			})

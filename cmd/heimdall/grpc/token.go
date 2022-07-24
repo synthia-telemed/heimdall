@@ -32,7 +32,10 @@ func (s TokenServer) GenerateToken(_ context.Context, tokenReq *pb.GenerateToken
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	payload := config.Payload{
-		CustomPayload: config.CustomPayload{UserID: tokenReq.GetUserID()},
+		CustomPayload: config.CustomPayload{
+			UserID: tokenReq.UserID,
+			Role:   tokenReq.Role,
+		},
 		MetadataPayload: config.MetadataPayload{
 			IssuedAt:  time.Now().UTC(),
 			ExpiredAt: time.Now().Add(s.validTime).UTC(),

@@ -41,7 +41,7 @@ var _ = Describe("TokenServer_gRPC", func() {
 
 		BeforeEach(func() {
 			handler = tokenServer.GenerateToken
-			req = &pb.GenerateTokenRequest{UserID: 99999}
+			req = &pb.GenerateTokenRequest{UserID: 99999, Role: "Doctor"}
 		})
 
 		JustBeforeEach(func() {

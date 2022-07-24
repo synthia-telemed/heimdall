@@ -9,6 +9,7 @@ type MetadataPayload struct {
 
 type CustomPayload struct {
 	UserID uint64 `json:"user_id" binding:"required" header:"X-USER-ID"`
+	Role   string `json:"role" binding:"required" header:"X-USER-ROLE"`
 }
 
 type Payload struct {

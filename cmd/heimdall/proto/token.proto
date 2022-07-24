@@ -8,6 +8,7 @@ service Token {
 
 message GenerateTokenRequest {
   uint64 UserID = 1 [(validate.rules).uint64.gte = 1];
+  string Role = 2 [(validate.rules).string.min_len = 1];
 }
 
 message TokenResponse {
