@@ -16,7 +16,9 @@ import (
 
 func NewGINServer(cfg *config.Config, tokenHandler *handler.TokenHandler) *http.Server {
 	gin.SetMode(cfg.GinMode)
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery())
+	router.Use(gin.LoggerWithConfig(gin.LoggerConfig{SkipPaths: []string{"/healthcheck"}}))
 	router.Use(sentrygin.New(sentrygin.Options{
 		Repanic: true,
 	}))
