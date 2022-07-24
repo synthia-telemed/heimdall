@@ -1,9 +1,12 @@
 definitions:
   config.CustomPayload:
     properties:
+      role:
+        type: string
       user_id:
         type: integer
     required:
+    - role
     - user_id
     type: object
   config.Payload:
@@ -12,9 +15,12 @@ definitions:
         type: string
       issued_at:
         type: string
+      role:
+        type: string
       user_id:
         type: integer
     required:
+    - role
     - user_id
     type: object
   handler.ErrorResponse:

@@ -132,9 +132,13 @@ const docTemplate = `{
         "config.CustomPayload": {
             "type": "object",
             "required": [
+                "role",
                 "user_id"
             ],
             "properties": {
+                "role": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 }
@@ -143,6 +147,7 @@ const docTemplate = `{
         "config.Payload": {
             "type": "object",
             "required": [
+                "role",
                 "user_id"
             ],
             "properties": {
@@ -150,6 +155,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "issued_at": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 },
                 "user_id": {

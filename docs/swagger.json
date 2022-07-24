@@ -123,9 +123,13 @@
         "config.CustomPayload": {
             "type": "object",
             "required": [
+                "role",
                 "user_id"
             ],
             "properties": {
+                "role": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 }
@@ -134,6 +138,7 @@
         "config.Payload": {
             "type": "object",
             "required": [
+                "role",
                 "user_id"
             ],
             "properties": {
@@ -141,6 +146,9 @@
                     "type": "string"
                 },
                 "issued_at": {
+                    "type": "string"
+                },
+                "role": {
                     "type": "string"
                 },
                 "user_id": {
