@@ -8,5 +8,6 @@ RUN go build -o heimdall cmd/heimdall/main.go
 
 FROM alpine:3
 WORKDIR /app
-COPY --from=builder /app/heimdall ./heimdall
-ENTRYPOINT ["/app/heimdall"]
+COPY ./ ./
+COPY --from=builder /app/heimdall ./bin/heimdall
+ENTRYPOINT ["/app/bin/heimdall"]
