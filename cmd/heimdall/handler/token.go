@@ -143,6 +143,9 @@ func (h TokenHandler) ParsePayloadAndSetHeader(c *gin.Context) {
 		return
 	}
 
+	header := c.GetHeader("X-Forwarded-Uri")
+	h.logger.Infow("X-Forwarded-Uri", "header", header)
+
 	for i := 0; i < reflect.TypeOf(payload.CustomPayload).NumField(); i++ {
 		field := reflect.TypeOf(payload.CustomPayload).Field(i)
 		headerName := field.Tag.Get("header")
