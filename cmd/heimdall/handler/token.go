@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -23,6 +24,7 @@ var (
 	TokenFormatError           = errors.New("token format is invalid")
 	TokenParsingError          = errors.New("failed to parse token")
 	TokenExpiredError          = errors.New("token is expired")
+	UnauthorizedError          = errors.New("unauthorized")
 )
 
 type TokenHandler struct {
@@ -143,9 +145,6 @@ func (h TokenHandler) ParsePayloadAndSetHeader(c *gin.Context) {
 		return
 	}
 
-	header := c.GetHeader("X-Forwarded-Uri")
-	h.logger.Infow("X-Forwarded-Uri", "header", header)
-
 	for i := 0; i < reflect.TypeOf(payload.CustomPayload).NumField(); i++ {
 		field := reflect.TypeOf(payload.CustomPayload).Field(i)
 		headerName := field.Tag.Get("header")
@@ -183,12 +182,38 @@ func (h TokenHandler) AuthenticateToken(c *gin.Context) {
 		return
 	}
 
+	path := c.GetHeader("X-Forwarded-Uri")
+	pathMatcher, err := regexp.Compile("\\/(patient|doctor)\\/.*")
+	if err != nil {
+		h.logger.Errorw("Failed to create token regex", "error", err)
+		_ = c.AbortWithError(http.StatusInternalServerError, TokenRegexCreationError)
+		if hub := sentrygin.GetHubFromContext(c); hub != nil {
+			hub.CaptureException(TokenRegexCreationError)
+		}
+		return
+	}
+	targetService := pathMatcher.FindStringSubmatch(path)[1]
+	role := strings.ToLower(payload.CustomPayload.Role)
+	if !h.isAuthorized(targetService, role) {
+		_ = c.AbortWithError(http.StatusUnauthorized, UnauthorizedError)
+		return
+	}
+
 	c.Set("payload", payload)
 	c.Next()
 }
 
 func (h TokenHandler) isTokenExpired(expiredAt time.Time) bool {
 	if h.validTime.Microseconds() == 0 || expiredAt.After(time.Now()) {
+		return false
+	}
+	return true
+}
+
+func (h TokenHandler) isAuthorized(targetService, role string) bool {
+	if targetService == "patient" && role != "patient" {
+		return false
+	} else if targetService == "doctor" && role != "doctor" {
 		return false
 	}
 	return true
