@@ -25,6 +25,7 @@ var _ = Describe("ErrorHandler", func() {
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		rec = httptest.NewRecorder()
+		gin.SetMode(gin.TestMode)
 		c, _ = gin.CreateTestContext(rec)
 		handlerFunc = handler.HTTPErrorHandler
 

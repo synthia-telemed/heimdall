@@ -183,20 +183,13 @@ func (h TokenHandler) AuthenticateToken(c *gin.Context) {
 	}
 
 	path := c.GetHeader("X-Forwarded-Uri")
-	pathMatcher, err := regexp.Compile("\\/(patient|doctor)\\/.*")
-	if err != nil {
-		h.logger.Errorw("Failed to create token regex", "error", err)
-		_ = c.AbortWithError(http.StatusInternalServerError, TokenRegexCreationError)
-		if hub := sentrygin.GetHubFromContext(c); hub != nil {
-			hub.CaptureException(TokenRegexCreationError)
+	if len(path) > 0 {
+		splitPath := strings.SplitN(path, `/`, 3)
+		role := strings.ToLower(payload.CustomPayload.Role)
+		if !h.isAuthorized(splitPath[1], role) {
+			_ = c.AbortWithError(http.StatusUnauthorized, UnauthorizedError)
+			return
 		}
-		return
-	}
-	targetService := pathMatcher.FindStringSubmatch(path)[1]
-	role := strings.ToLower(payload.CustomPayload.Role)
-	if !h.isAuthorized(targetService, role) {
-		_ = c.AbortWithError(http.StatusUnauthorized, UnauthorizedError)
-		return
 	}
 
 	c.Set("payload", payload)

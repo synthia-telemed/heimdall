@@ -35,6 +35,7 @@ var _ = Describe("TokenHandler", func() {
 		mockTokenManager = mock_token.NewMockManager(mockCtrl)
 		h = handler.NewTokenHandler(zap.NewNop().Sugar(), mockTokenManager, time.Hour)
 		rec = httptest.NewRecorder()
+		gin.SetMode(gin.TestMode)
 		c, _ = gin.CreateTestContext(rec)
 		payload = &config.Payload{
 			CustomPayload: config.CustomPayload{UserID: 99},
@@ -191,20 +192,49 @@ var _ = Describe("TokenHandler", func() {
 		})
 
 		When("Token is valid", func() {
+			var token string
 			BeforeEach(func() {
-				token := "really.valid.token"
+				token = "really.valid.token"
 				c.Request.Header.Set("Authorization", "Bearer "+token)
 				mockTokenManager.EXPECT().Parse(token).Return(payload, nil).Times(1)
 			})
 
-			It("should set the payload properly", func() {
-				Expect(rec.Code).To(Equal(http.StatusOK))
-				settledPayloadValue, ok := c.Get("payload")
-				Expect(ok).To(BeTrue())
-				settledPayload, ok := settledPayloadValue.(*config.Payload)
-				Expect(ok).To(BeTrue())
-				Expect(&settledPayload).To(Equal(&payload))
+			Context("Access doctor protected route", func() {
+				BeforeEach(func() {
+					c.Request.Header.Set("X-Forwarded-Uri", "/doctor/api/protected/test")
+				})
+
+				When("User is doctor", func() {
+					BeforeEach(func() {
+						payload.Role = "Doctor"
+					})
+
+					It("should set the payload", func() {
+						assertPayload(payload, rec, c)
+					})
+				})
+
+				When("User is patient", func() {
+					BeforeEach(func() {
+						payload.Role = "Patient"
+					})
+
+					It("should return unauthorized error", func() {
+						Expect(rec.Code).To(Equal(http.StatusUnauthorized))
+						Expect(c.Errors.Last().Err).To(Equal(handler.UnauthorizedError))
+					})
+				})
+
 			})
+
+			//It("should set the payload properly", func() {
+			//	Expect(rec.Code).To(Equal(http.StatusOK))
+			//	settledPayloadValue, ok := c.Get("payload")
+			//	Expect(ok).To(BeTrue())
+			//	settledPayload, ok := settledPayloadValue.(*config.Payload)
+			//	Expect(ok).To(BeTrue())
+			//	Expect(&settledPayload).To(Equal(&payload))
+			//})
 		})
 
 		When("Token is expired", func() {
@@ -224,6 +254,7 @@ var _ = Describe("TokenHandler", func() {
 		When("Token valid time is indefinite", func() {
 			BeforeEach(func() {
 				token := "valid.expired.token"
+				c.Request.Header.Set("X-Forwarded-Uri", "/not-tested/api")
 				c.Request.Header.Set("Authorization", "Bearer "+token)
 				payload.ExpiredAt = time.Now().Add(-time.Hour)
 				mockTokenManager.EXPECT().Parse(token).Return(payload, nil).Times(1)
@@ -268,3 +299,12 @@ var _ = Describe("TokenHandler", func() {
 	})
 
 })
+
+func assertPayload(payload *config.Payload, rec *httptest.ResponseRecorder, c *gin.Context) {
+	Expect(rec.Code).To(Equal(http.StatusOK))
+	settledPayloadValue, ok := c.Get("payload")
+	Expect(ok).To(BeTrue())
+	settledPayload, ok := settledPayloadValue.(*config.Payload)
+	Expect(ok).To(BeTrue())
+	Expect(&settledPayload).To(Equal(&payload))
+}
