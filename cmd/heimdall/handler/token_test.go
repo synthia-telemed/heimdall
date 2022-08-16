@@ -80,8 +80,8 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return 400", func() {
-				Expect(rec.Code).To(Equal(http.StatusBadRequest))
-				Expect(c.Errors.Last().Err).To(Equal(handler.BadRequestBodyError))
+				assertError(rec, c, http.StatusBadRequest, handler.BadRequestBodyError)
+
 			})
 		})
 
@@ -93,8 +93,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.TokenGenerationError))
+				assertError(rec, c, http.StatusInternalServerError, handler.TokenGenerationError)
 			})
 		})
 	})
@@ -120,8 +119,7 @@ var _ = Describe("TokenHandler", func() {
 
 		When("Payload is missing", func() {
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.GetPayloadFromContextError))
+				assertError(rec, c, http.StatusInternalServerError, handler.GetPayloadFromContextError)
 			})
 		})
 
@@ -133,8 +131,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.PayloadTypeCastingError))
+				assertError(rec, c, http.StatusInternalServerError, handler.PayloadTypeCastingError)
 			})
 		})
 	})
@@ -166,8 +163,7 @@ var _ = Describe("TokenHandler", func() {
 
 		When("Payload is missing", func() {
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.GetPayloadFromContextError))
+				assertError(rec, c, http.StatusInternalServerError, handler.GetPayloadFromContextError)
 			})
 		})
 
@@ -179,8 +175,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.PayloadTypeCastingError))
+				assertError(rec, c, http.StatusInternalServerError, handler.PayloadTypeCastingError)
 			})
 		})
 	})
@@ -218,8 +213,7 @@ var _ = Describe("TokenHandler", func() {
 						payload.Role = "Patient"
 					})
 					It("should return unauthorized error", func() {
-						Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-						Expect(c.Errors.Last().Err).To(Equal(handler.UnauthorizedError))
+						assertError(rec, c, http.StatusUnauthorized, handler.UnauthorizedError)
 					})
 				})
 			})
@@ -234,8 +228,7 @@ var _ = Describe("TokenHandler", func() {
 						payload.Role = "Doctor"
 					})
 					It("should return unauthorized error", func() {
-						Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-						Expect(c.Errors.Last().Err).To(Equal(handler.UnauthorizedError))
+						assertError(rec, c, http.StatusUnauthorized, handler.UnauthorizedError)
 					})
 				})
 
@@ -284,8 +277,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return unauthorized status with error", func() {
-				Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-				Expect(c.Errors.Last().Err).To(Equal(handler.TokenExpiredError))
+				assertError(rec, c, http.StatusUnauthorized, handler.TokenExpiredError)
 			})
 		})
 
@@ -312,8 +304,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return unauthorized status with error", func() {
-				Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-				Expect(c.Errors.Last().Err).To(Equal(handler.TokenFormatError))
+				assertError(rec, c, http.StatusUnauthorized, handler.TokenFormatError)
 			})
 		})
 
@@ -325,8 +316,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return unauthorized status with error", func() {
-				Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-				Expect(c.Errors.Last().Err).To(Equal(handler.TokenParsingError))
+				assertError(rec, c, http.StatusUnauthorized, handler.TokenParsingError)
 			})
 		})
 	})
@@ -340,4 +330,9 @@ func assertPayload(payload *config.Payload, rec *httptest.ResponseRecorder, c *g
 	settledPayload, ok := settledPayloadValue.(*config.Payload)
 	Expect(ok).To(BeTrue())
 	Expect(&settledPayload).To(Equal(&payload))
+}
+
+func assertError(rec *httptest.ResponseRecorder, c *gin.Context, expectedCode int, expectedError error) {
+	Expect(rec.Code).To(Equal(expectedCode))
+	Expect(c.Errors.Last().Err).To(Equal(expectedError))
 }
