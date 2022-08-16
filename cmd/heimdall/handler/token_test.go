@@ -208,7 +208,6 @@ var _ = Describe("TokenHandler", func() {
 					BeforeEach(func() {
 						payload.Role = "Doctor"
 					})
-
 					It("should set the payload", func() {
 						assertPayload(payload, rec, c)
 					})
@@ -218,10 +217,58 @@ var _ = Describe("TokenHandler", func() {
 					BeforeEach(func() {
 						payload.Role = "Patient"
 					})
-
 					It("should return unauthorized error", func() {
 						Expect(rec.Code).To(Equal(http.StatusUnauthorized))
 						Expect(c.Errors.Last().Err).To(Equal(handler.UnauthorizedError))
+					})
+				})
+			})
+
+			Context("Access patient protected route", func() {
+				BeforeEach(func() {
+					c.Request.Header.Set("X-Forwarded-Uri", "/patient/api/protected/test")
+				})
+
+				When("User is doctor", func() {
+					BeforeEach(func() {
+						payload.Role = "Doctor"
+					})
+					It("should return unauthorized error", func() {
+						Expect(rec.Code).To(Equal(http.StatusUnauthorized))
+						Expect(c.Errors.Last().Err).To(Equal(handler.UnauthorizedError))
+					})
+				})
+
+				When("User is patient", func() {
+					BeforeEach(func() {
+						payload.Role = "Patient"
+					})
+					It("should set the payload", func() {
+						assertPayload(payload, rec, c)
+					})
+				})
+			})
+
+			Context("Access unchecked service protected route", func() {
+				BeforeEach(func() {
+					c.Request.Header.Set("X-Forwarded-Uri", "/not-check/api/protected/test")
+				})
+
+				When("User is doctor", func() {
+					BeforeEach(func() {
+						payload.Role = "Doctor"
+					})
+					It("should set the payload", func() {
+						assertPayload(payload, rec, c)
+					})
+				})
+
+				When("User is patient", func() {
+					BeforeEach(func() {
+						payload.Role = "Patient"
+					})
+					It("should set the payload", func() {
+						assertPayload(payload, rec, c)
 					})
 				})
 			})
