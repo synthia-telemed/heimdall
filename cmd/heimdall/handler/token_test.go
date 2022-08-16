@@ -35,6 +35,7 @@ var _ = Describe("TokenHandler", func() {
 		mockTokenManager = mock_token.NewMockManager(mockCtrl)
 		h = handler.NewTokenHandler(zap.NewNop().Sugar(), mockTokenManager, time.Hour)
 		rec = httptest.NewRecorder()
+		gin.SetMode(gin.TestMode)
 		c, _ = gin.CreateTestContext(rec)
 		payload = &config.Payload{
 			CustomPayload: config.CustomPayload{UserID: 99},
@@ -79,8 +80,8 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return 400", func() {
-				Expect(rec.Code).To(Equal(http.StatusBadRequest))
-				Expect(c.Errors.Last().Err).To(Equal(handler.BadRequestBodyError))
+				assertError(rec, c, http.StatusBadRequest, handler.BadRequestBodyError)
+
 			})
 		})
 
@@ -92,8 +93,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.TokenGenerationError))
+				assertError(rec, c, http.StatusInternalServerError, handler.TokenGenerationError)
 			})
 		})
 	})
@@ -119,8 +119,7 @@ var _ = Describe("TokenHandler", func() {
 
 		When("Payload is missing", func() {
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.GetPayloadFromContextError))
+				assertError(rec, c, http.StatusInternalServerError, handler.GetPayloadFromContextError)
 			})
 		})
 
@@ -132,8 +131,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.PayloadTypeCastingError))
+				assertError(rec, c, http.StatusInternalServerError, handler.PayloadTypeCastingError)
 			})
 		})
 	})
@@ -165,8 +163,7 @@ var _ = Describe("TokenHandler", func() {
 
 		When("Payload is missing", func() {
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.GetPayloadFromContextError))
+				assertError(rec, c, http.StatusInternalServerError, handler.GetPayloadFromContextError)
 			})
 		})
 
@@ -178,8 +175,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return 500", func() {
-				Expect(rec.Code).To(Equal(http.StatusInternalServerError))
-				Expect(c.Errors.Last().Err).To(Equal(handler.PayloadTypeCastingError))
+				assertError(rec, c, http.StatusInternalServerError, handler.PayloadTypeCastingError)
 			})
 		})
 	})
@@ -197,14 +193,72 @@ var _ = Describe("TokenHandler", func() {
 				mockTokenManager.EXPECT().Parse(token).Return(payload, nil).Times(1)
 			})
 
-			It("should set the payload properly", func() {
-				Expect(rec.Code).To(Equal(http.StatusOK))
-				settledPayloadValue, ok := c.Get("payload")
-				Expect(ok).To(BeTrue())
-				settledPayload, ok := settledPayloadValue.(*config.Payload)
-				Expect(ok).To(BeTrue())
-				Expect(&settledPayload).To(Equal(&payload))
+			Context("Access doctor protected route", func() {
+				BeforeEach(func() {
+					c.Request.Header.Set("X-Forwarded-Uri", "/doctor/api/protected/test")
+				})
+				When("User is doctor", func() {
+					BeforeEach(func() {
+						payload.Role = "Doctor"
+					})
+					It("should set the payload", func() {
+						assertPayload(payload, rec, c)
+					})
+				})
+				When("User is patient", func() {
+					BeforeEach(func() {
+						payload.Role = "Patient"
+					})
+					It("should return unauthorized error", func() {
+						assertError(rec, c, http.StatusUnauthorized, handler.UnauthorizedError)
+					})
+				})
 			})
+
+			Context("Access patient protected route", func() {
+				BeforeEach(func() {
+					c.Request.Header.Set("X-Forwarded-Uri", "/patient/api/protected/test")
+				})
+				When("User is doctor", func() {
+					BeforeEach(func() {
+						payload.Role = "Doctor"
+					})
+					It("should return unauthorized error", func() {
+						assertError(rec, c, http.StatusUnauthorized, handler.UnauthorizedError)
+					})
+				})
+				When("User is patient", func() {
+					BeforeEach(func() {
+						payload.Role = "Patient"
+					})
+					It("should set the payload", func() {
+						assertPayload(payload, rec, c)
+					})
+				})
+			})
+
+			Context("Access unchecked service protected route", func() {
+				BeforeEach(func() {
+					c.Request.Header.Set("X-Forwarded-Uri", "/not-check/api/protected/test")
+				})
+				When("User is doctor", func() {
+					BeforeEach(func() {
+						payload.Role = "Doctor"
+					})
+					It("should set the payload", func() {
+						assertPayload(payload, rec, c)
+					})
+				})
+				When("User is patient", func() {
+					BeforeEach(func() {
+						payload.Role = "Patient"
+					})
+					It("should set the payload", func() {
+						assertPayload(payload, rec, c)
+					})
+				})
+			})
+
 		})
 
 		When("Token is expired", func() {
@@ -216,14 +270,14 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return unauthorized status with error", func() {
-				Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-				Expect(c.Errors.Last().Err).To(Equal(handler.TokenExpiredError))
+				assertError(rec, c, http.StatusUnauthorized, handler.TokenExpiredError)
 			})
 		})
 
 		When("Token valid time is indefinite", func() {
 			BeforeEach(func() {
 				token := "valid.expired.token"
+				c.Request.Header.Set("X-Forwarded-Uri", "/not-tested/api")
 				c.Request.Header.Set("Authorization", "Bearer "+token)
 				payload.ExpiredAt = time.Now().Add(-time.Hour)
 				mockTokenManager.EXPECT().Parse(token).Return(payload, nil).Times(1)
@@ -232,12 +286,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should set the payload properly", func() {
-				Expect(rec.Code).To(Equal(http.StatusOK))
-				settledPayloadValue, ok := c.Get("payload")
-				Expect(ok).To(BeTrue())
-				settledPayload, ok := settledPayloadValue.(*config.Payload)
-				Expect(ok).To(BeTrue())
-				Expect(&settledPayload).To(Equal(&payload))
+				assertPayload(payload, rec, c)
 			})
 		})
 
@@ -248,8 +297,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return unauthorized status with error", func() {
-				Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-				Expect(c.Errors.Last().Err).To(Equal(handler.TokenFormatError))
+				assertError(rec, c, http.StatusUnauthorized, handler.TokenFormatError)
 			})
 		})
 
@@ -261,10 +309,23 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should return unauthorized status with error", func() {
-				Expect(rec.Code).To(Equal(http.StatusUnauthorized))
-				Expect(c.Errors.Last().Err).To(Equal(handler.TokenParsingError))
+				assertError(rec, c, http.StatusUnauthorized, handler.TokenParsingError)
 			})
 		})
 	})
 
 })
+
+func assertPayload(payload *config.Payload, rec *httptest.ResponseRecorder, c *gin.Context) {
+	Expect(rec.Code).To(Equal(http.StatusOK))
+	settledPayloadValue, ok := c.Get("payload")
+	Expect(ok).To(BeTrue())
+	settledPayload, ok := settledPayloadValue.(*config.Payload)
+	Expect(ok).To(BeTrue())
+	Expect(&settledPayload).To(Equal(&payload))
+}
+
+func assertError(rec *httptest.ResponseRecorder, c *gin.Context, expectedCode int, expectedError error) {
+	Expect(rec.Code).To(Equal(expectedCode))
+	Expect(c.Errors.Last().Err).To(Equal(expectedError))
+}
