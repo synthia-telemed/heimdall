@@ -224,17 +224,8 @@ var _ = Describe("TokenHandler", func() {
 						Expect(c.Errors.Last().Err).To(Equal(handler.UnauthorizedError))
 					})
 				})
-
 			})
 
-			//It("should set the payload properly", func() {
-			//	Expect(rec.Code).To(Equal(http.StatusOK))
-			//	settledPayloadValue, ok := c.Get("payload")
-			//	Expect(ok).To(BeTrue())
-			//	settledPayload, ok := settledPayloadValue.(*config.Payload)
-			//	Expect(ok).To(BeTrue())
-			//	Expect(&settledPayload).To(Equal(&payload))
-			//})
 		})
 
 		When("Token is expired", func() {
@@ -263,12 +254,7 @@ var _ = Describe("TokenHandler", func() {
 			})
 
 			It("should set the payload properly", func() {
-				Expect(rec.Code).To(Equal(http.StatusOK))
-				settledPayloadValue, ok := c.Get("payload")
-				Expect(ok).To(BeTrue())
-				settledPayload, ok := settledPayloadValue.(*config.Payload)
-				Expect(ok).To(BeTrue())
-				Expect(&settledPayload).To(Equal(&payload))
+				assertPayload(payload, rec, c)
 			})
 		})
 
