@@ -187,9 +187,8 @@ var _ = Describe("TokenHandler", func() {
 		})
 
 		When("Token is valid", func() {
-			var token string
 			BeforeEach(func() {
-				token = "really.valid.token"
+				token := "really.valid.token"
 				c.Request.Header.Set("Authorization", "Bearer "+token)
 				mockTokenManager.EXPECT().Parse(token).Return(payload, nil).Times(1)
 			})
