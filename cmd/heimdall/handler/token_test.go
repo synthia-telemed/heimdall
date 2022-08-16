@@ -198,7 +198,6 @@ var _ = Describe("TokenHandler", func() {
 				BeforeEach(func() {
 					c.Request.Header.Set("X-Forwarded-Uri", "/doctor/api/protected/test")
 				})
-
 				When("User is doctor", func() {
 					BeforeEach(func() {
 						payload.Role = "Doctor"
@@ -207,7 +206,6 @@ var _ = Describe("TokenHandler", func() {
 						assertPayload(payload, rec, c)
 					})
 				})
-
 				When("User is patient", func() {
 					BeforeEach(func() {
 						payload.Role = "Patient"
@@ -222,7 +220,6 @@ var _ = Describe("TokenHandler", func() {
 				BeforeEach(func() {
 					c.Request.Header.Set("X-Forwarded-Uri", "/patient/api/protected/test")
 				})
-
 				When("User is doctor", func() {
 					BeforeEach(func() {
 						payload.Role = "Doctor"
@@ -231,7 +228,6 @@ var _ = Describe("TokenHandler", func() {
 						assertError(rec, c, http.StatusUnauthorized, handler.UnauthorizedError)
 					})
 				})
-
 				When("User is patient", func() {
 					BeforeEach(func() {
 						payload.Role = "Patient"
@@ -246,7 +242,6 @@ var _ = Describe("TokenHandler", func() {
 				BeforeEach(func() {
 					c.Request.Header.Set("X-Forwarded-Uri", "/not-check/api/protected/test")
 				})
-
 				When("User is doctor", func() {
 					BeforeEach(func() {
 						payload.Role = "Doctor"
@@ -255,7 +250,6 @@ var _ = Describe("TokenHandler", func() {
 						assertPayload(payload, rec, c)
 					})
 				})
-
 				When("User is patient", func() {
 					BeforeEach(func() {
 						payload.Role = "Patient"
