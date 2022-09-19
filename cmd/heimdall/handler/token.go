@@ -167,6 +167,7 @@ func (h TokenHandler) AuthenticateToken(c *gin.Context) {
 		return
 	}
 	if !reg.MatchString(bearerToken) {
+		h.logger.Infow("token format error", "token", bearerToken, "length", len(bearerToken))
 		_ = c.AbortWithError(http.StatusUnauthorized, TokenFormatError)
 		return
 	}
